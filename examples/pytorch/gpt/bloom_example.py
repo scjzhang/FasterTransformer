@@ -25,6 +25,7 @@ from typing import Dict, List
 import torch
 import tqdm
 import transformers
+from examples.pytorch.gpt.utils import comm
 
 from utils import bloom
 
