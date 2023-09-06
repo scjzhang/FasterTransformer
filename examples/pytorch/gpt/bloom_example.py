@@ -338,6 +338,7 @@ def main():
     timer = Timer()
     # Inputs
     args.batch_size = 4
+    args.max_new_tokens = 128
     # dataset = SampleDataset(args.dataset_path, tokenizer=tokenizer)
     dataset = SampleDataset(filename, tokenizer=tokenizer, input_size=256, batch_size=4)
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size)
