@@ -398,7 +398,7 @@ def main():
                 model_answer=output_texts[i],
                 input_ids=input_token_ids[i].tolist(),
                 input_len=input_lengths[i].item(),
-                output_len=output_length,
+                output_len=args.max_new_tokens,
                 model_params=bloom.BloomParam.from_args(args),
                 infer_params=params.slice_args(i),
                 output_ids=out,
