@@ -402,7 +402,7 @@ def main():
                 model_params=bloom.BloomParam.from_args(args),
                 infer_params=params.slice_args(i),
                 output_ids=out,
-                metrics=Metric(acc=float(is_correct))
+                metrics=None
             )
             results['output']['lambada'].append(result.asdict())
 
