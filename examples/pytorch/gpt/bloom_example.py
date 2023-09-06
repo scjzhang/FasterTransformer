@@ -56,7 +56,7 @@ class SampleDataset(torch.utils.data.Dataset):
             with open(path, 'w') as f:
                 f.write(prompt)
             input_sentences = [prompt]
-        if args.batch_size > len(input_sentences):
+        if batch_size > len(input_sentences):
             # dynamically extend to support larger bs by repetition
             input_sentences *= math.ceil(batch_size / len(input_sentences))
         inputs = input_sentences[:batch_size]
