@@ -365,7 +365,7 @@ def main():
             # output_token_ids: input/padding/output
             output_token_ids = outputs[:, input_token_ids.shape[1]:]
             output_token_ids = [
-                out[].cpu()
+                out[:].cpu()
                 for out in output_token_ids]
         else:
             param_dict = params.asdict()
