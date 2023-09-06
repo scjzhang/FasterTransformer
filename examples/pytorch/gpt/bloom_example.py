@@ -41,26 +41,24 @@ class SampleDataset(torch.utils.data.Dataset):
 
     def __init__(self,
                  path: str | pathlib.Path,
-                 tokenizer: transformers.PreTrainedTokenizerBase):
+                 tokenizer: transformers.PreTrainedTokenizerBase, 
+                 input_size=128: int,
+                 batch_size=1: int):
         self.tokenizer = tokenizer
-        if args.sample_input_file:
-            filename = args.sample_input_file
-        else:
-            filename = f"prompts/{args.name}/{args.input_size}.txt"
         try:
-            with open(filename, 'r') as f:
+            with open(path, 'r') as f:
                 prompt = f.read()
             input_sentences = [prompt]
         except:
-            prompt = generate_input_prompt(tokenizer, args.input_size)
-            os.makedirs(os.path.dirname(filename), exist_ok=True)
-            with open(filename, 'w') as f:
+            prompt = generate_input_prompt(tokenizer, input_size)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, 'w') as f:
                 f.write(prompt)
             input_sentences = [prompt]
         if args.batch_size > len(input_sentences):
             # dynamically extend to support larger bs by repetition
-            input_sentences *= math.ceil(args.batch_size / len(input_sentences))
-        inputs = input_sentences[:args.batch_size]
+            input_sentences *= math.ceil(batch_size / len(input_sentences))
+        inputs = input_sentences[:batch_size]
 
         self.encodings = self.tokenizer(list(inputs),
                                 padding=True,
