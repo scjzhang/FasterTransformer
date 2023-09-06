@@ -333,11 +333,12 @@ def main():
     args = get_args()
     model, tokenizer = get_model_and_tokenizer(args)
     model.eval()
-
+    filename = f"prompts/256.txt"
     timer = Timer()
     # Inputs
     args.batch_size = 4
-    dataset = SampleDataset(args.dataset_path, tokenizer=tokenizer)
+    # dataset = SampleDataset(args.dataset_path, tokenizer=tokenizer)
+    dataset = SampleDataset(filename, tokenizer=tokenizer, input_size=256, batch_size=4)
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size)
 
     for entries in data_loader:
