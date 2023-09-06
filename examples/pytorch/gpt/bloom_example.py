@@ -36,25 +36,37 @@ class TensorEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
-class LambadaDataset(torch.utils.data.Dataset):
+class SampleDataset(torch.utils.data.Dataset):
     """ LAMBADA dataset class. """
 
     def __init__(self,
                  path: str | pathlib.Path,
                  tokenizer: transformers.PreTrainedTokenizerBase):
         self.tokenizer = tokenizer
-        with open(path, 'r') as f:
-            inputs, targets = zip(*[
-                json.loads(line)["text"] .strip('\n').rsplit(' ', 1)
-                for line in f.readlines()])
-            # This whitespace preprocessing (additional space to the target)
-            # is required.
-            targets = [' ' + tgt for tgt in targets]
-            self.encodings = self.tokenizer(list(inputs),
-                                            targets,
-                                            padding=True,
-                                            return_token_type_ids=True,
-                                            return_tensors='pt')
+        if args.sample_input_file:
+            filename = args.sample_input_file
+        else:
+            filename = f"prompts/{args.name}/{args.input_size}.txt"
+        try:
+            with open(filename, 'r') as f:
+                prompt = f.read()
+            input_sentences = [prompt]
+        except:
+            prompt = generate_input_prompt(tokenizer, args.input_size)
+            os.makedirs(os.path.dirname(filename), exist_ok=True)
+            with open(filename, 'w') as f:
+                f.write(prompt)
+            input_sentences = [prompt]
+        if args.batch_size > len(input_sentences):
+            # dynamically extend to support larger bs by repetition
+            input_sentences *= math.ceil(args.batch_size / len(input_sentences))
+        inputs = input_sentences[:args.batch_size]
+
+        self.encodings = self.tokenizer(list(inputs),
+                                padding=True,
+                                return_token_type_ids=True,
+                                return_tensors='pt')
+
 
     def __len__(self):
         return len(self.encodings['input_ids'])
@@ -76,7 +88,6 @@ class Metric:
 class RequestAndResult:
     prompt: str
     model_answer: str
-    target: str
     input_ids: List[int]
     input_len: int
     output_len: int
@@ -300,37 +311,50 @@ def split_inputs_and_targets(entries: Dict[str, torch.LongTensor],
     return input_token_ids, input_lengths, target_token_ids
 
 
+def generate_input_prompt(tokenizer, num_tokens):
+    words = ""
+    with open('nate_the_snake.txt', 'r') as f:
+        while True:
+            char = f.read(1)
+            if not char:
+                break
+            outputs = tokenizer([words + char],
+                                padding=True,
+                                return_token_type_ids=True,
+                                return_tensors='pt')
+            if len(outputs['input_ids'][0]) < num_tokens:
+                words += char
+                continue
+            else:
+                words += char
+                break
+    return words
+
 @torch.no_grad()
 def main():
     args = get_args()
     model, tokenizer = get_model_and_tokenizer(args)
     model.eval()
 
-    dataset = LambadaDataset(args.dataset_path, tokenizer=tokenizer)
-    data_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size)
-
-    num_requests = 0
-    num_corrects = 0
-    results = {"output": {"lambada": []}, "results": {"lambada": {}}}
-
     timer = Timer()
-    if args.show_progress:
-        data_loader = tqdm.tqdm(data_loader)
+    # Inputs
+    args.batch_size = 4
+    dataset = SampleDataset(args.dataset_path, tokenizer=tokenizer)
+    data_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size)
 
     for entries in data_loader:
         input_token_ids, input_lengths, target_token_ids = \
             split_inputs_and_targets(entries, tokenizer.pad_token_id, args.test_hf)
 
         batch_size = input_token_ids.shape[0]
-        output_length = max([len(target) for target in target_token_ids])
-
+        print("BATCH SIZE = ", batch_size)
         params = bloom.BloomInferParam.from_args(args, batch_size)
 
         if args.test_hf:
             # Outputs (batch_size, seq_length)
             timer.start()
             outputs = model.generate(inputs=input_token_ids.cuda(),
-                                     max_new_tokens=output_length,
+                                     max_new_tokens=args.max_new_tokens,
                                      num_beams=args.beam_width,
                                      temperature=args.temperature,
                                      top_k=args.top_k,
@@ -341,14 +365,14 @@ def main():
             # output_token_ids: input/padding/output
             output_token_ids = outputs[:, input_token_ids.shape[1]:]
             output_token_ids = [
-                out[:len(tgt)].cpu()
-                for out, tgt in zip(output_token_ids, target_token_ids)]
+                out[].cpu()
+                for out in output_token_ids]
         else:
             param_dict = params.asdict()
             timer.start()
             outputs = model(start_ids=input_token_ids,
                             start_lengths=input_lengths,
-                            output_len=output_length,
+                            output_len=128,
                             **param_dict)
             timer.stop()
 
@@ -358,24 +382,19 @@ def main():
             # Slice the generated token ids of the 1st beam result.
             # output = input tokens + generated tokens.
             output_token_ids = [
-                out[0, length:length+len(tgt)].cpu()
-                for out, length, tgt
-                in zip(outputs, input_lengths, target_token_ids)]
+                out[0, length:].cpu()
+                for out, length
+                in zip(outputs, input_lengths)]
 
         output_texts = tokenizer.batch_decode(output_token_ids)
-        target_texts = tokenizer.batch_decode(target_token_ids)
         input_texts = tokenizer.batch_decode(input_token_ids)
-
+        print(output_texts)
         # Convert to output objects.
         for i in range(batch_size):
             out = output_token_ids[i]
-            tgt = target_token_ids[i].cpu()
-            is_correct = (tgt == out).all()
-            num_corrects += int(is_correct)
             result = RequestAndResult(
                 prompt=input_texts[i],
                 model_answer=output_texts[i],
-                target=target_texts[i],
                 input_ids=input_token_ids[i].tolist(),
                 input_len=input_lengths[i].item(),
                 output_len=output_length,
@@ -386,25 +405,18 @@ def main():
             )
             results['output']['lambada'].append(result.asdict())
 
-        num_requests += batch_size
+    # Measure inference time.
+    # if args.time:
+    #     iterations = 10
+    #     for _ in range(iterations):
+    #         gpt_generate_fn()
+    #     time = timeit.default_timer()
+    #     for _ in range(iterations):
+    #         gpt_generate_fn()
+    #     time_elapsed = timeit.default_timer() - time
+    #     print(f'[INFO] GPT time costs: {time_elapsed * 1000 / iterations:.2f} ms')
 
-    accuracy = num_corrects * 100 / num_requests
-    # Reference: HF model's LAMBADA Accuracy for bloom-560m ~ 35.36%
-    print(f'Accuracy: {accuracy:0.4f}% ({num_corrects}/{num_requests}) '
-          f'(elapsed time: {timer.elapsed_time_in_sec():.4f} sec)')
-    # Dump prediction json
-    results['results']['lambada']['acc'] = accuracy
-    if args.output_path:
-        output_path = pathlib.Path(args.output_path)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        with output_path.open(mode='w') as f:
-            json.dump(results, f, indent=2, cls=TensorEncoder)
-
-    if args.acc_threshold is not None:
-        assert accuracy >= args.acc_threshold, \
-            f'TEST FAIL the achieved accuracy ({accuracy:.2f}) is less ' \
-            f'than given threshold ({args.acc_threshold:.2f})'
-        print('TEST PASS')
+    print(f'(elapsed time: {timer.elapsed_time_in_sec():.4f} sec)')
 
 
 if __name__ == "__main__":
