@@ -42,8 +42,8 @@ class SampleDataset(torch.utils.data.Dataset):
     def __init__(self,
                  path: str | pathlib.Path,
                  tokenizer: transformers.PreTrainedTokenizerBase, 
-                 input_size=128: int,
-                 batch_size=1: int):
+                 input_size=128,
+                 batch_size=1):
         self.tokenizer = tokenizer
         try:
             with open(path, 'r') as f:
