@@ -29,6 +29,7 @@ import transformers
 from utils import comm
 from utils import bloom
 
+device = 0
 
 class TensorEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -205,6 +206,7 @@ def get_model_and_tokenizer(args: argparse.Namespace):
 
     comm.initialize_model_parallel(args.tensor_para_size, args.pipeline_para_size)
     rank = comm.get_rank()
+    global device
     device = comm.get_device()
 
     if args.test_hf:
@@ -342,11 +344,10 @@ def main():
     # dataset = SampleDataset(args.dataset_path, tokenizer=tokenizer)
     dataset = SampleDataset(filename, tokenizer=tokenizer, input_size=256, batch_size=4)
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size)
-
     for entries in data_loader:
         input_token_ids, input_lengths, target_token_ids = \
             split_inputs_and_targets(entries, tokenizer.pad_token_id, args.test_hf)
-
+        print(input_lengths)
         batch_size = input_token_ids.shape[0]
         print("BATCH SIZE = ", batch_size)
         params = bloom.BloomInferParam.from_args(args, batch_size)
@@ -391,20 +392,20 @@ def main():
         input_texts = tokenizer.batch_decode(input_token_ids)
         print(output_texts)
         # Convert to output objects.
-        for i in range(batch_size):
-            out = output_token_ids[i]
-            result = RequestAndResult(
-                prompt=input_texts[i],
-                model_answer=output_texts[i],
-                input_ids=input_token_ids[i].tolist(),
-                input_len=input_lengths[i].item(),
-                output_len=args.max_new_tokens,
-                model_params=bloom.BloomParam.from_args(args),
-                infer_params=params.slice_args(i),
-                output_ids=out,
-                metrics=None
-            )
-            results['output']['lambada'].append(result.asdict())
+        # for i in range(batch_size):
+        #     out = output_token_ids[i]
+        #     result = RequestAndResult(
+        #         prompt=input_texts[i],
+        #         model_answer=output_texts[i],
+        #         input_ids=input_token_ids[i].tolist(),
+        #         input_len=input_lengths[i].item(),
+        #         output_len=args.max_new_tokens,
+        #         model_params=bloom.BloomParam.from_args(args),
+        #         infer_params=params.slice_args(i),
+        #         output_ids=out,
+        #         metrics=None
+        #     )
+        #     results['output']['lambada'].append(result.asdict())
 
     # Measure inference time.
     # if args.time:
