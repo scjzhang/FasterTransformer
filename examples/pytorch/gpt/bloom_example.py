@@ -375,7 +375,7 @@ def main():
             timer.start()
             outputs = model(start_ids=input_token_ids,
                             start_lengths=input_lengths,
-                            output_len=128,
+                            output_len=args.max_new_tokens,
                             **param_dict)
             timer.stop()
 
