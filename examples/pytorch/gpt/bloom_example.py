@@ -337,13 +337,14 @@ def main():
     model, tokenizer = get_model_and_tokenizer(args)
     model.eval()
     filename = f"prompts/256.txt"
-    timer = Timer()
     # Inputs
     args.batch_size = 1
     args.max_new_tokens = 1
     # dataset = SampleDataset(args.dataset_path, tokenizer=tokenizer)
     dataset = SampleDataset(filename, tokenizer=tokenizer, input_size=8192, batch_size=1)
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size)
+    timer = Timer()
+
     for entries in data_loader:
         input_token_ids, input_lengths, target_token_ids = \
             split_inputs_and_targets(entries, tokenizer.pad_token_id, args.test_hf)
