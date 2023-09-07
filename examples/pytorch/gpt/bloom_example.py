@@ -339,10 +339,10 @@ def main():
     filename = f"prompts/256.txt"
     timer = Timer()
     # Inputs
-    args.batch_size = 4
-    args.max_new_tokens = 128
+    args.batch_size = 1
+    args.max_new_tokens = 1
     # dataset = SampleDataset(args.dataset_path, tokenizer=tokenizer)
-    dataset = SampleDataset(filename, tokenizer=tokenizer, input_size=256, batch_size=4)
+    dataset = SampleDataset(filename, tokenizer=tokenizer, input_size=8192, batch_size=1)
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size)
     for entries in data_loader:
         input_token_ids, input_lengths, target_token_ids = \
