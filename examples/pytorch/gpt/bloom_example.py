@@ -336,7 +336,7 @@ def main():
     args = get_args()
     model, tokenizer = get_model_and_tokenizer(args)
     model.eval()
-    filename = f"prompts/256.txt"
+    filename = f"prompts/8192.txt"
     # Inputs
     args.batch_size = 1
     args.max_new_tokens = 1
