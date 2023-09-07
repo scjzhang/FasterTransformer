@@ -292,7 +292,7 @@ def split_inputs_and_targets(entries: Dict[str, torch.LongTensor],
 
     # Split inputs and labels by token_type_ids.
     input_token_ids = [
-        ids[(mask == 1) & (type_ids == 0)]
+        torch.tensor(ids[(mask == 1) & (type_ids == 0)], dtype=torch.int32, device=device)
         for ids, mask, type_ids in zip(input_ids, attn_mask, token_type_ids)]
     # FT allows int32 tensors.
     input_lengths = torch.tensor(
