@@ -20,6 +20,7 @@ import dataclasses
 import json
 import pathlib
 import time
+from torch.nn.utils.rnn import pad_sequence
 from typing import Dict, List
 import os
 import math
@@ -291,21 +292,23 @@ def split_inputs_and_targets(entries: Dict[str, torch.LongTensor],
     token_type_ids = entries['token_type_ids']
 
     # Split inputs and labels by token_type_ids.
+    global device
     input_token_ids = [
         torch.tensor(ids[(mask == 1) & (type_ids == 0)], dtype=torch.int32, device=device)
         for ids, mask, type_ids in zip(input_ids, attn_mask, token_type_ids)]
     # FT allows int32 tensors.
-    input_lengths = torch.tensor(
-        [len(input_tokens) for input_tokens in input_token_ids]).int()
+    input_lengths = torch.IntTensor(
+        [len(input_tokens) for input_tokens in input_token_ids])
     max_length = input_lengths.max()
-    input_token_ids = torch.stack([
-        torch.nn.functional.pad(
-            token_ids,
-            pad=[max_length - len(token_ids), 0]
-                if pad_to_left else [0, max_length - len(token_ids)],
-            mode='constant',
-            value=pad_token_id
-        ) for token_ids in input_token_ids]).int()
+    # input_token_ids = torch.stack([
+    #     torch.nn.functional.pad(
+    #         token_ids,
+    #         pad=[max_length - len(token_ids), 0]
+    #             if pad_to_left else [0, max_length - len(token_ids)],
+    #         mode='constant',
+    #         value=pad_token_id
+    #     ) for token_ids in input_token_ids]).int()
+    input_token_ids = pad_sequence(input_token_ids, batch_first=True, padding_value=pad_token_id)
     target_token_ids = [
         ids[(mask == 1) & (type_ids == 1)]
         for ids, mask, type_ids in zip(input_ids, attn_mask, token_type_ids)]
