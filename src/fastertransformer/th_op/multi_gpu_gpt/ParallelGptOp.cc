@@ -185,7 +185,7 @@ std::vector<th::Tensor> ParallelGptOp::forward(th::Tensor               input_id
     int world_size = mpi::getCommWorldSize();
 
     if (rank == 0) {
-        printf("[INFO]: Forward Pass Start\n");
+        std::cout << "[INFO]: Forward Pass Start" << std::endl;
     }
     ftgpt->forward(input_ids,
                    input_lengths,
