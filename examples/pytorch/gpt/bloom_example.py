@@ -342,7 +342,7 @@ def main():
     filename = f"prompts/4096.txt"
     # Inputs
     args.batch_size = 1
-    args.max_new_tokens = 1
+    args.max_new_tokens = 128
     # dataset = SampleDataset(args.dataset_path, tokenizer=tokenizer)
     dataset = SampleDataset(filename, tokenizer=tokenizer, input_size=4096, batch_size=1)
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size)
