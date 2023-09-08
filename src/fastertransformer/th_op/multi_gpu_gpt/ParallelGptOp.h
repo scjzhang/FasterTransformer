@@ -19,6 +19,7 @@
 #include "src/fastertransformer/th_op/th_utils.h"
 #include "src/fastertransformer/utils/cuda_bf16_wrapper.h"
 #include "src/fastertransformer/utils/nccl_utils.h"
+#include <stdio.h>
 
 namespace ft = fastertransformer;
 namespace th = torch;
