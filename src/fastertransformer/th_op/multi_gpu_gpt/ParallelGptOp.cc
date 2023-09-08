@@ -17,6 +17,7 @@
 #include "src/fastertransformer/th_op/multi_gpu_gpt/ParallelGptOp.h"
 #include "src/fastertransformer/th_op/multi_gpu_gpt/WeightTransposeCalibrateQuantizeOp.h"
 #include "src/fastertransformer/utils/mpi_utils.h"
+#include <stdio.h>
 
 namespace th = torch;
 namespace ft = fastertransformer;
