@@ -351,9 +351,7 @@ def main():
     for entries in data_loader:
         input_token_ids, input_lengths, target_token_ids = \
             split_inputs_and_targets(entries, tokenizer.pad_token_id, args.test_hf)
-        print(input_lengths)
         batch_size = input_token_ids.shape[0]
-        print("BATCH SIZE = ", batch_size)
         params = bloom.BloomInferParam.from_args(args, batch_size)
 
         if args.test_hf:

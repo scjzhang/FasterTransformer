@@ -16,6 +16,7 @@
 
 #include "src/fastertransformer/th_op/multi_gpu_gpt/ParallelGptOp.h"
 #include "src/fastertransformer/th_op/multi_gpu_gpt/WeightTransposeCalibrateQuantizeOp.h"
+#include "src/fastertransformer/utils/mpi_utils.h"
 
 namespace th = torch;
 namespace ft = fastertransformer;
@@ -178,7 +179,13 @@ std::vector<th::Tensor> ParallelGptOp::forward(th::Tensor               input_id
         torch::empty({batch_size, beam_width}, torch::dtype(torch::kInt32).device(torch::kCUDA).requires_grad(false));
     th::Tensor cum_log_probs =
         torch::empty({batch_size, beam_width}, torch::dtype(torch::kFloat32).device(torch::kCUDA).requires_grad(false));
+    
+    int rank       = mpi::getCommWorldRank();
+    int world_size = mpi::getCommWorldSize();
 
+    if (rank == 0) {
+        printf("[INFO]: Forward Pass Start\n");
+    }
     ftgpt->forward(input_ids,
                    input_lengths,
                    output_ids,
