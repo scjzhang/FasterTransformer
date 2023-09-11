@@ -26,6 +26,13 @@
 #include "src/fastertransformer/utils/logger.h"
 #include "src/fastertransformer/utils/nvtx_utils.h"
 
+#include <chrono>
+
+using std::chrono::high_resolution_clock;
+using std::chrono::duration_cast;
+using std::chrono::duration;
+using std::chrono::milliseconds;
+
 namespace fastertransformer {
 
 template<typename T>
@@ -567,14 +574,6 @@ void ParallelGpt<T>::forward(std::vector<Tensor>*        output_tensors,
     if (output_tensors->size() > 3) {
         output_tensors_map.insert({"cum_log_probs", output_tensors->at(4)});
     }
-
-    // int rank       = mpi::getCommWorldRank();
-    // int world_size = mpi::getCommWorldSize();
-
-    // if (rank == 0) {
-    std::cout << "[INFO]: Forward Pass Start" << std::endl;
-    // }
-
     forward(&output_tensors_map, &input_tensors_map, gpt_weights);
 }
 
@@ -960,6 +959,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
         POP_RANGE;
 
         // handle first step
+        auto start = std::chrono::high_resolution_clock::now();
         if (has_p_prompt_tuning_ || has_prefix_prompt_ || has_prefix_soft_prompt_ || max_input_length > 1) {
             PUSH_RANGE("input tiling and init");
             invokeTileGptPromptInputs(tiled_input_ids_buf_,
@@ -1205,8 +1205,6 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
     for (int microbatch = 0; microbatch < iteration_num; ++microbatch) {
         microbatch_should_stop_[microbatch] = false;
     }
-    std::cout << "step size: " << gen_len << ", step start:" << step_start << std::endl;
-    std::cout << "max_context_len: " << max_context_len << std::endl;
     for (step_ = step_start; step_ < (int)gen_len; step_++) {
         // Loop body produces Nth token by embedding && encoding token (N-1)
         // if necessary.
@@ -1357,8 +1355,6 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
             }
 
             if (!fill_caches_only && pipeline_para_.rank_ == pipeline_para_.world_size_ - 1) {
-                std::cout << "step_: " << step_ << std::endl;
-
                 // OPT
                 PUSH_RANGE("Token Final Layer Norm");
                 T* decoder_output_final_buf =
@@ -1513,6 +1509,11 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
                 generation_should_stop &= subbatch_should_stop;
                 microbatch_should_stop_[ite] = subbatch_should_stop;
                 POP_RANGE;
+
+                if (step_ == step_start) {
+                    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+                    std::cout << "first step takes " << duration.count() << " ms" << std::endl;
+                }
             }
             else {
                 // for other ranks, they cannot update generation_should_stop by DynamicDecode, set to false directly;
