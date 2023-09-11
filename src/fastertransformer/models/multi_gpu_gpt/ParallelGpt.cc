@@ -959,7 +959,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
         POP_RANGE;
 
         // handle first step
-        auto start = std::chrono::high_resolution_clock::now();
+        auto timer_start = std::chrono::high_resolution_clock::now();
         if (has_p_prompt_tuning_ || has_prefix_prompt_ || has_prefix_soft_prompt_ || max_input_length > 1) {
             PUSH_RANGE("input tiling and init");
             invokeTileGptPromptInputs(tiled_input_ids_buf_,
@@ -1511,9 +1511,9 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
                 POP_RANGE;
 
                 if (step_ == step_start) {
-                    auto end = std::chrono::high_resolution_clock::now();
-                    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-                    std::cout << "first step takes " << duration.count() << " ms" << std::endl;
+                    auto timer_end = std::chrono::high_resolution_clock::now();
+                    auto first_step_duration = std::chrono::duration_cast<std::chrono::milliseconds>(timer_end - timer_start);
+                    std::cout << "first step takes " << first_step_duration.count() << " ms" << std::endl;
                 }
             }
             else {
