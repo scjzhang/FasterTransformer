@@ -1514,7 +1514,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
                 if (step_ == step_start) {
                     auto end = std::chrono::high_resolution_clock::now();
                     auto uration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-                    std::cout << "first step takes " << first_step_duration.count() << " ms" << std::endl;
+                    std::cout << "first step takes " << duration.count() << " ms" << std::endl;
                 }
             }
             else {
