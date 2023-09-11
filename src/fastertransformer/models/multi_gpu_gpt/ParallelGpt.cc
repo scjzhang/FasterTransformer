@@ -1206,7 +1206,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
     for (int microbatch = 0; microbatch < iteration_num; ++microbatch) {
         microbatch_should_stop_[microbatch] = false;
     }
-
+    std::cout << "step size: " << gen_len << ", step start:" << step_start << std::endl;
     for (step_ = step_start; step_ < (int)gen_len; step_++) {
         // Loop body produces Nth token by embedding && encoding token (N-1)
         // if necessary.
