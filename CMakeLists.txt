@@ -101,7 +101,7 @@ if(USE_TRITONSERVER_DATATYPE)
   add_definitions("-DUSE_TRITONSERVER_DATATYPE")
 endif()
 
-set(CXX_STD "14" CACHE STRING "C++ standard")
+set(CXX_STD "17" CACHE STRING "C++ standard")
 
 set(CUDA_PATH ${CUDA_TOOLKIT_ROOT_DIR})
 
@@ -283,7 +283,7 @@ endif()
 
 if (BUILD_MULTI_GPU)
   list(APPEND COMMON_HEADER_DIRS ${MPI_INCLUDE_PATH})
-  list(APPEND COMMON_LIB_DIRS /usr/local/mpi/lib)
+  list(APPEND COMMON_LIB_DIRS /opt/openmpi-4.1.5/lib)
 endif()
 
 if(USE_TRITONSERVER_DATATYPE)
