@@ -631,7 +631,6 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
     // complete this step.
     // When there is no input_ids, put the start token at step 0 of output_ids_buf_. After forward, only copy
     // the step 1 ~ max_output_seq_len of output_ids_buf_ to output_tensors->at(0).data
-    std::cout << "[INFO]: Forward Pass Start 2" << std::endl;
 
     FT_LOG_DEBUG("%s start", __PRETTY_FUNCTION__);
     FT_CHECK_WITH_INFO(input_tensors->size() >= 3, "input_tensors->size() >= 3");
@@ -1207,6 +1206,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
         microbatch_should_stop_[microbatch] = false;
     }
     std::cout << "step size: " << gen_len << ", step start:" << step_start << std::endl;
+    std::cout << "max_context_len: " << max_context_len << std::endl;
     for (step_ = step_start; step_ < (int)gen_len; step_++) {
         // Loop body produces Nth token by embedding && encoding token (N-1)
         // if necessary.
@@ -1357,6 +1357,8 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
             }
 
             if (!fill_caches_only && pipeline_para_.rank_ == pipeline_para_.world_size_ - 1) {
+                std::cout << "step_: " << step_ << std::endl;
+
                 // OPT
                 PUSH_RANGE("Token Final Layer Norm");
                 T* decoder_output_final_buf =
