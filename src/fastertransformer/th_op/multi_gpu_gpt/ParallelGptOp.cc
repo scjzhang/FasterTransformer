@@ -181,12 +181,6 @@ std::vector<th::Tensor> ParallelGptOp::forward(th::Tensor               input_id
     th::Tensor cum_log_probs =
         torch::empty({batch_size, beam_width}, torch::dtype(torch::kFloat32).device(torch::kCUDA).requires_grad(false));
     
-    // int rank       = mpi::getCommWorldRank();
-    // int world_size = mpi::getCommWorldSize();
-
-    // if (rank == 0) {
-    std::cout << "[INFO]: Forward Pass Start" << std::endl;
-    // }
     ftgpt->forward(input_ids,
                    input_lengths,
                    output_ids,

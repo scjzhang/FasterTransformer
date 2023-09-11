@@ -415,6 +415,13 @@ public:
             input_tensors.insert({"bad_words_list", convert_tensor<int>(bad_words_list_opt.value())});
         }
 
+        // int rank       = mpi::getCommWorldRank();
+        // int world_size = mpi::getCommWorldSize();
+
+        // if (rank == 0) {
+        std::cout << "[INFO]: Forward Pass Start" << std::endl;
+        // }
+
         bool return_context_cum_log_probs = false;
         if (return_cum_log_probs == 2) {
             return_context_cum_log_probs = true;
