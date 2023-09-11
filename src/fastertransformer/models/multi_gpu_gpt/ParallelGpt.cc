@@ -567,6 +567,14 @@ void ParallelGpt<T>::forward(std::vector<Tensor>*        output_tensors,
     if (output_tensors->size() > 3) {
         output_tensors_map.insert({"cum_log_probs", output_tensors->at(4)});
     }
+
+    // int rank       = mpi::getCommWorldRank();
+    // int world_size = mpi::getCommWorldSize();
+
+    // if (rank == 0) {
+    std::cout << "[INFO]: Forward Pass Start" << std::endl;
+    // }
+
     forward(&output_tensors_map, &input_tensors_map, gpt_weights);
 }
 
@@ -623,6 +631,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
     // complete this step.
     // When there is no input_ids, put the start token at step 0 of output_ids_buf_. After forward, only copy
     // the step 1 ~ max_output_seq_len of output_ids_buf_ to output_tensors->at(0).data
+    std::cout << "[INFO]: Forward Pass Start 2" << std::endl;
 
     FT_LOG_DEBUG("%s start", __PRETTY_FUNCTION__);
     FT_CHECK_WITH_INFO(input_tensors->size() >= 3, "input_tensors->size() >= 3");
