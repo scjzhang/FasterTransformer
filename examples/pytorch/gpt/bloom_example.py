@@ -350,6 +350,9 @@ def generate_input_prompt(tokenizer, num_tokens):
 @torch.no_grad()
 def main():
     args = get_args()
+    print("Input size: ", args.input_size)
+    print("Batch size: ", args.batch_size)
+    print("Max new tokens: ", args.max_new_tokens)
     model, tokenizer = get_model_and_tokenizer(args)
     model.eval()
     filename = f"prompts/{args.input_size}.txt"
@@ -357,9 +360,7 @@ def main():
     # args.batch_size = 1
     # args.max_new_tokens = 128
     iterations = 5
-    print("Input size: ", args.input_size)
-    print("Batch size: ", args.batch_size)
-    print("Max new tokens: ", args.max_new_tokens)
+
     # dataset = SampleDataset(args.dataset_path, tokenizer=tokenizer)
     dataset = SampleDataset(filename, tokenizer=tokenizer, input_size=args.input_size, batch_size=args.batch_size)
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size)
