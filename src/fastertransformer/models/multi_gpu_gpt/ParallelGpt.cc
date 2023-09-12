@@ -1569,7 +1569,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
         if (step_ == step_start && tensor_para_.rank_ == 0) {
             std::cout << "Prompt Phase: " << duration.count() << " ms" << std::endl;
         }
-        if (step_ != step_start && tensor_para_.rank_ == 0) {
+        if (step_ != step_start) {
             token_durations.push_back(duration);
         }
 
@@ -1603,13 +1603,14 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
         POP_RANGE;
     }
 
-    long long totalDuration = 0;
-    for (const auto& duration : token_durations) {
-        totalDuration += duration.count();
+    if (tensor_para_.rank_ == 0) {
+        long long totalDuration = 0;
+        for (const auto& duration : token_durations) {
+            totalDuration += duration.count();
+        }
+        double averageDuration = static_cast<double>(totalDuration) / token_durations.size();
+        std::cout << "Token Phase: " << averageDuration << " ms" << std::endl;
     }
-    double averageDuration = static_cast<double>(totalDuration) / token_durations.size();
-    std::cout << "Token Phase: " << averageDuration << " ms" << std::endl;
-
     PUSH_RANGE("communicate tensors");
     setOutputTensors(
         output_tensors, input_tensors, gen_len, session_len, max_context_len, max_input_without_prompt_length);
