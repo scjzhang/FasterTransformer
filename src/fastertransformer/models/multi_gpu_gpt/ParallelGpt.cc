@@ -664,7 +664,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
 
     const int initial_step    = continue_gen ? step_ : 0;
     int       max_context_len = max_input_length + initial_step;
-    // long long start = 0;
+    auto start = std::chrono::high_resolution_clock::now();
     // NOTE: the input already contains the p/prompt-tunning tokens ids for p/prompt tuning task
     // prompt_learning_task_name_ids are used by both p/prompt-tunning and prefix_prompt task
     const int* prompt_learning_task_name_ids =
@@ -959,7 +959,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
         POP_RANGE;
 
         // handle first step
-        auto start = std::chrono::high_resolution_clock::now();
+        start = std::chrono::high_resolution_clock::now();
         if (has_p_prompt_tuning_ || has_prefix_prompt_ || has_prefix_soft_prompt_ || max_input_length > 1) {
             PUSH_RANGE("input tiling and init");
             invokeTileGptPromptInputs(tiled_input_ids_buf_,
