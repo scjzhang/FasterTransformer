@@ -1229,7 +1229,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
             // Rank 0~N-1 needs to update the buffer by the results of last rank when the pipeline parallelism is
             // enabled (pipeline_para_.world_size_ > 1). And if step_ == step_start, then this is the first step and
             // these buffers are initialized by context directly.
-            if (step != step_start) {
+            if (step_ != step_start) {
                 start = std::chrono::high_resolution_clock::now();
             }
             if (step_ != step_start && pipeline_para_.rank_ != pipeline_para_.world_size_ - 1
