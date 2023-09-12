@@ -665,6 +665,8 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
     const int initial_step    = continue_gen ? step_ : 0;
     int       max_context_len = max_input_length + initial_step;
     auto start = std::chrono::high_resolution_clock::now();
+    std::vector<std::chrono::milliseconds> token_durations;
+
     // NOTE: the input already contains the p/prompt-tunning tokens ids for p/prompt tuning task
     // prompt_learning_task_name_ids are used by both p/prompt-tunning and prefix_prompt task
     const int* prompt_learning_task_name_ids =
@@ -1227,6 +1229,9 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
             // Rank 0~N-1 needs to update the buffer by the results of last rank when the pipeline parallelism is
             // enabled (pipeline_para_.world_size_ > 1). And if step_ == step_start, then this is the first step and
             // these buffers are initialized by context directly.
+            if (step != step_start) {
+                start = std::chrono::high_resolution_clock::now();
+            }
             if (step_ != step_start && pipeline_para_.rank_ != pipeline_para_.world_size_ - 1
                 && pipeline_para_.world_size_ > 1) {
                 ftNcclGroupStart();
@@ -1509,12 +1514,6 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
                 generation_should_stop &= subbatch_should_stop;
                 microbatch_should_stop_[ite] = subbatch_should_stop;
                 POP_RANGE;
-
-                if (step_ == step_start) {
-                    auto stop = std::chrono::high_resolution_clock::now();
-                    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-                    std::cout << "first step takes " << duration.count() << " ms" << std::endl;
-                }
             }
             else {
                 // for other ranks, they cannot update generation_should_stop by DynamicDecode, set to false directly;
@@ -1565,6 +1564,15 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
             POP_RANGE;
         }
 
+        auto stop = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+        if (step_ == step_start && tensor_para_.rank_ == 0) {
+            std::cout << "Prompt Phase: " << duration.count() << " ms" << std::endl;
+        }
+        if (step_ != step_start && tensor_para_.rank_ == 0) {
+            token_durations.push_back(duration);
+        }
+
         if (token_generated_cb_ && step_ + 1 < (int)gen_len) {
             setOutputTensors(
                 output_tensors, input_tensors, gen_len, session_len, max_context_len, max_input_without_prompt_length);
@@ -1594,6 +1602,14 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
 
         POP_RANGE;
     }
+
+    long long totalDuration = 0;
+    for (const auto& duration : token_durations) {
+        totalDuration += duration.count();
+    }
+    double averageDuration = static_cast<double>(totalDuration) / token_durations.size();
+    std::cout << "Token Phase: " << averageDuration << " ms" << std::endl;
+
     PUSH_RANGE("communicate tensors");
     setOutputTensors(
         output_tensors, input_tensors, gen_len, session_len, max_context_len, max_input_without_prompt_length);
