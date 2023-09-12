@@ -179,6 +179,19 @@ def get_args():
         help='The level of quantization to perform.'
              ' 0: No quantization. All computation in data_type'
              ' 1: Quantize weights to int8, all compute occurs in fp16/bf16. Not supported when data_type is fp32')
+    group.add_argument(
+        '--input_size', type=int, default=128,
+        help='The size of the input prompt')
+    group.add_argument(
+        '--batch_size', type=int, default=1,
+        help='The batch size of the input prompt')
+    group.add_argument(
+        '--max_new_tokens', type=int, default=128,
+        help='The max number of tokens to generate')
+    group.add_argument(
+        '--show_output', action='store_true',
+        help='Show generated output text')
+    
     args = parser.parse_args()
 
     print('\n=================== Arguments ===================')
@@ -339,12 +352,16 @@ def main():
     args = get_args()
     model, tokenizer = get_model_and_tokenizer(args)
     model.eval()
-    filename = f"prompts/4096.txt"
+    filename = f"prompts/{args.input_size}.txt"
     # Inputs
-    args.batch_size = 1
-    args.max_new_tokens = 128
+    # args.batch_size = 1
+    # args.max_new_tokens = 128
+    iters = 5
+    print("Input size: ", args.input_size)
+    print("Batch size: ", args.batch_size)
+    print("Max new tokens: ", args.max_new_tokens)
     # dataset = SampleDataset(args.dataset_path, tokenizer=tokenizer)
-    dataset = SampleDataset(filename, tokenizer=tokenizer, input_size=4096, batch_size=1)
+    dataset = SampleDataset(filename, tokenizer=tokenizer, input_size=args.input_size, batch_size=args.batch_size)
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size)
     timer = Timer()
 
@@ -378,7 +395,7 @@ def main():
                             start_lengths=input_lengths,
                             output_len=args.max_new_tokens,
                             **param_dict)
-            for i in range(5):
+            for i in range(iters):
                 timer.start()
                 outputs = model(start_ids=input_token_ids,
                                 start_lengths=input_lengths,
@@ -398,7 +415,9 @@ def main():
 
         output_texts = tokenizer.batch_decode(output_token_ids)
         input_texts = tokenizer.batch_decode(input_token_ids)
-        print(output_texts)
+        if args.show_output:
+            if device == 0:
+                print(input_texts)
         # Convert to output objects.
         # for i in range(batch_size):
         #     out = output_token_ids[i]
@@ -425,8 +444,8 @@ def main():
     #         gpt_generate_fn()
     #     time_elapsed = timeit.default_timer() - time
     #     print(f'[INFO] GPT time costs: {time_elapsed * 1000 / iterations:.2f} ms')
-
-    print(f'(elapsed time: {timer.elapsed_time_in_sec()/5:.4f} sec)')
+    if device == 0:
+        print(f'[INFO] Total time: {time_elapsed * 1000 / iterations:.2f} ms')
 
 
 if __name__ == "__main__":
