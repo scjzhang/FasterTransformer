@@ -664,7 +664,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
 
     const int initial_step    = continue_gen ? step_ : 0;
     int       max_context_len = max_input_length + initial_step;
-    long long start = 0;
+    // long long start = 0;
     // NOTE: the input already contains the p/prompt-tunning tokens ids for p/prompt tuning task
     // prompt_learning_task_name_ids are used by both p/prompt-tunning and prefix_prompt task
     const int* prompt_learning_task_name_ids =
