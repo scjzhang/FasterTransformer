@@ -445,7 +445,7 @@ def main():
     #     time_elapsed = timeit.default_timer() - time
     #     print(f'[INFO] GPT time costs: {time_elapsed * 1000 / iterations:.2f} ms')
     if device == 0:
-        print(f'[INFO] Total time: {time_elapsed * 1000 / iterations:.2f} ms')
+        print(f'[INFO] Total time: {timer.elapsed_time_in_sec() * 1000 / iterations:.2f} ms')
 
 
 if __name__ == "__main__":
