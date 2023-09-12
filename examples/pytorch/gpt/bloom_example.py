@@ -373,12 +373,18 @@ def main():
                 for out in output_token_ids]
         else:
             param_dict = params.asdict()
-            timer.start()
+            # adding a warmup run
             outputs = model(start_ids=input_token_ids,
                             start_lengths=input_lengths,
                             output_len=args.max_new_tokens,
                             **param_dict)
-            timer.stop()
+            for i in range(5):
+                timer.start()
+                outputs = model(start_ids=input_token_ids,
+                                start_lengths=input_lengths,
+                                output_len=args.max_new_tokens,
+                                **param_dict)
+                timer.stop()
 
             if params.return_cum_log_probs or params.return_cum_log_probs > 0:
                 outputs = outputs[0]  # output_token_ids.
@@ -420,7 +426,7 @@ def main():
     #     time_elapsed = timeit.default_timer() - time
     #     print(f'[INFO] GPT time costs: {time_elapsed * 1000 / iterations:.2f} ms')
 
-    print(f'(elapsed time: {timer.elapsed_time_in_sec():.4f} sec)')
+    print(f'(elapsed time: {timer.elapsed_time_in_sec()/5:.4f} sec)')
 
 
 if __name__ == "__main__":
