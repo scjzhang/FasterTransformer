@@ -356,7 +356,7 @@ def main():
     # Inputs
     # args.batch_size = 1
     # args.max_new_tokens = 128
-    iters = 5
+    iterations = 5
     print("Input size: ", args.input_size)
     print("Batch size: ", args.batch_size)
     print("Max new tokens: ", args.max_new_tokens)
@@ -395,7 +395,7 @@ def main():
                             start_lengths=input_lengths,
                             output_len=args.max_new_tokens,
                             **param_dict)
-            for i in range(iters):
+            for i in range(iterations):
                 timer.start()
                 outputs = model(start_ids=input_token_ids,
                                 start_lengths=input_lengths,
