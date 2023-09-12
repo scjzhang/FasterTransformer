@@ -32,7 +32,6 @@ using std::chrono::high_resolution_clock;
 using std::chrono::duration_cast;
 using std::chrono::duration;
 using std::chrono::milliseconds;
-duration = std::chrono::duration<double, std::milli>(end-start);
 
 namespace fastertransformer {
 
@@ -665,7 +664,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
 
     const int initial_step    = continue_gen ? step_ : 0;
     int       max_context_len = max_input_length + initial_step;
-
+    long long start = 0;
     // NOTE: the input already contains the p/prompt-tunning tokens ids for p/prompt tuning task
     // prompt_learning_task_name_ids are used by both p/prompt-tunning and prefix_prompt task
     const int* prompt_learning_task_name_ids =
@@ -1512,8 +1511,8 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
                 POP_RANGE;
 
                 if (step_ == step_start) {
-                    auto end = std::chrono::high_resolution_clock::now();
-                    auto uration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+                    auto stop = std::chrono::high_resolution_clock::now();
+                    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
                     std::cout << "first step takes " << duration.count() << " ms" << std::endl;
                 }
             }
