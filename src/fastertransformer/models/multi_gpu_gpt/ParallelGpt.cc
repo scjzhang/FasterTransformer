@@ -1609,7 +1609,6 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
             totalDuration += duration.count();
         }
         double averageDuration = static_cast<double>(totalDuration) / token_durations.size();
-        std::cout << token_durations.size() << " tokens during token phase" << std::endl;
         std::cout << "Token Phase: " << averageDuration << " ms" << std::endl;
     }
     PUSH_RANGE("communicate tensors");
