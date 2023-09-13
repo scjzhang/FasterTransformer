@@ -374,7 +374,6 @@ def main():
 
         if args.test_hf:
             # Outputs (batch_size, seq_length)
-            timer.start()
             outputs = model.generate(inputs=input_token_ids.cuda(),
                                      max_new_tokens=args.max_new_tokens,
                                      num_beams=args.beam_width,
@@ -383,7 +382,18 @@ def main():
                                      top_p=args.top_p,
                                      repetition_penalty=args.repetition_penalty,
                                      length_penalty=args.len_penalty)
-            timer.stop()
+            
+            for i in range(iterations):
+                timer.start()
+                outputs = model.generate(inputs=input_token_ids.cuda(),
+                                        max_new_tokens=args.max_new_tokens,
+                                        num_beams=args.beam_width,
+                                        temperature=args.temperature,
+                                        top_k=args.top_k,
+                                        top_p=args.top_p,
+                                        repetition_penalty=args.repetition_penalty,
+                                        length_penalty=args.len_penalty)
+                timer.stop()
             # output_token_ids: input/padding/output
             output_token_ids = outputs[:, input_token_ids.shape[1]:]
             output_token_ids = [
@@ -409,10 +419,10 @@ def main():
 
             # Slice the generated token ids of the 1st beam result.
             # output = input tokens + generated tokens.
-            output_token_ids = [
-                out[0, length:].cpu()
-                for out, length
-                in zip(outputs, input_lengths)]
+        output_token_ids = [
+            out[0, length:].cpu()
+            for out, length
+            in zip(outputs, input_lengths)]
 
         output_texts = tokenizer.batch_decode(output_token_ids)
         input_texts = tokenizer.batch_decode(input_token_ids)
