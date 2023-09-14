@@ -979,6 +979,9 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
             sync_check_cuda_error();
             POP_RANGE;
 
+            auto prompt_stop = std::chrono::high_resolution_clock::now();
+            auto prompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(prompt_stop - start);
+            std::cout << "Input tiling and init: " << prompt_duration << std::endl;
             if (has_prefix_soft_prompt_) {
                 PUSH_RANGE("input id embedding lookup");
                 inputIdsEmbeddingLookupPosEncodingSoftPromptParam<T> param;
@@ -1029,6 +1032,9 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
                                                          stream_);
                 sync_check_cuda_error();
                 POP_RANGE;
+                auto prompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prompt_stop);
+                auto prompt_stop = std::chrono::high_resolution_clock::now();
+                std::cout << "Input Embedding Lookup Pos Encoding: " << prompt_duration << std::endl;
             }
 
             if (gpt_variant_params_.has_pre_decoder_layernorm) {
@@ -1055,6 +1061,10 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
                                             stream_);
             sync_check_cuda_error();
             POP_RANGE;
+
+            auto prompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prompt_stop);
+            auto prompt_stop = std::chrono::high_resolution_clock::now();
+            std::cout << "Decoder attention mask: " << prompt_duration << std::endl;
 
             TensorMap decoder_input_tensors(
                 {{"decoder_input",
@@ -1110,6 +1120,10 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
                                          stream_);
                 POP_RANGE;
             }
+
+            auto prompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prompt_stop);
+            auto prompt_stop = std::chrono::high_resolution_clock::now();
+            std::cout << "Decoder layer forward pass: " << prompt_duration << std::endl;
 
             PUSH_RANGE("decoding init");
             invokeDecodingInitialize(finished_buf_,
