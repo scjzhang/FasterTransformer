@@ -1062,8 +1062,8 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
             sync_check_cuda_error();
             POP_RANGE;
 
-            auto prompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prompt_stop);
-            auto prompt_stop = std::chrono::high_resolution_clock::now();
+            prompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prompt_stop);
+            prompt_stop = std::chrono::high_resolution_clock::now();
             std::cout << "Decoder attention mask: " << prompt_duration << std::endl;
 
             TensorMap decoder_input_tensors(
@@ -1121,9 +1121,8 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
                 POP_RANGE;
             }
 
-            // auto prompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prompt_stop);
-            // auto prompt_stop = std::chrono::high_resolution_clock::now();
-            // std::cout << "Decoder layer forward pass: " << prompt_duration << std::endl;
+            prompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prompt_stop);
+            std::cout << "Decoder layer forward pass: " << prompt_duration << std::endl;
 
             PUSH_RANGE("decoding init");
             invokeDecodingInitialize(finished_buf_,
