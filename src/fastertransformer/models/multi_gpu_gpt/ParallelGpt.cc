@@ -1143,8 +1143,6 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
             sync_check_cuda_error();
 
             prompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prompt_stop);
-            auto prompt_stop = std::chrono::high_resolution_clock::now();
-
             std::cout << "Initializing decoding: " << prompt_duration.count() << std::endl;
         }
         else if (max_input_length == 0) {
@@ -1196,6 +1194,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
             POP_RANGE;
         }
     }
+    auto prompt_stop = std::chrono::high_resolution_clock::now();
 
 
     PUSH_RANGE("mask padding tokens");
@@ -1218,9 +1217,6 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
     const size_t local_batch_size = getLocalBatchSize(batch_size, 1, pipeline_para_.world_size_);
     FT_CHECK(batch_size % local_batch_size == 0);
     const size_t iteration_num = batch_size / local_batch_size;
-
-    auto prompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prompt_stop);
-    std::cout << "Processing after forward pass: " << prompt_duration.count() << std::endl;
 
     for (int microbatch = 0; microbatch < iteration_num; ++microbatch) {
         microbatch_should_stop_[microbatch] = false;
