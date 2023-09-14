@@ -1141,6 +1141,11 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
                 POP_RANGE;
             }
             sync_check_cuda_error();
+
+            prompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prompt_stop);
+            auto prompt_stop = std::chrono::high_resolution_clock::now();
+
+            std::cout << "Initializing decoding: " << prompt_duration.count() << std::endl;
         }
         else if (max_input_length == 0) {
             FT_CHECK(prompt_learning_type_ == PromptLearningType::no_prompt
@@ -1192,6 +1197,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
         }
     }
 
+
     PUSH_RANGE("mask padding tokens");
     invokeMaskPaddingTokens(tiled_masked_tokens_,
                             input_tensors->at("input_lengths").getPtr<int>(),
@@ -1202,6 +1208,9 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
                             beam_width,
                             stream_);
     POP_RANGE;
+
+    prompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prompt_stop);
+    std::cout << "Mask padding tokens: " << prompt_duration.count() << std::endl;
 
     // If continue, we restart from initial_step because last token hasn't been processed in decoder
     const int step_start = continue_gen ? initial_step : max_input_length;
