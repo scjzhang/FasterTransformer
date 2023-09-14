@@ -1208,7 +1208,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
                             stream_);
     POP_RANGE;
 
-    prompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prompt_stop);
+    auto prompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prompt_stop);
     std::cout << "Mask padding tokens: " << prompt_duration.count() << std::endl;
 
     // If continue, we restart from initial_step because last token hasn't been processed in decoder
