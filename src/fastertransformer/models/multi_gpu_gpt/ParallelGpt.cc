@@ -979,9 +979,6 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
             sync_check_cuda_error();
             POP_RANGE;
 
-            auto prompt_stop = std::chrono::high_resolution_clock::now();
-            auto prompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(prompt_stop - start);
-            std::cout << "Input tiling and init: " << prompt_duration.count() << std::endl;
             if (has_prefix_soft_prompt_) {
                 PUSH_RANGE("input id embedding lookup");
                 inputIdsEmbeddingLookupPosEncodingSoftPromptParam<T> param;
@@ -1032,9 +1029,6 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
                                                          stream_);
                 sync_check_cuda_error();
                 POP_RANGE;
-                auto prompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prompt_stop);
-                auto prompt_stop = std::chrono::high_resolution_clock::now();
-                std::cout << "Input Embedding Lookup Pos Encoding: " << prompt_duration.count() << std::endl;
             }
 
             if (gpt_variant_params_.has_pre_decoder_layernorm) {
@@ -1062,9 +1056,6 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
             sync_check_cuda_error();
             POP_RANGE;
 
-            prompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prompt_stop);
-            prompt_stop = std::chrono::high_resolution_clock::now();
-            std::cout << "Decoder attention mask: " << prompt_duration.count() << std::endl;
 
             TensorMap decoder_input_tensors(
                 {{"decoder_input",
@@ -1121,7 +1112,8 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
                 POP_RANGE;
             }
 
-            prompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prompt_stop);
+            auto prompt_stop = std::chrono::high_resolution_clock::now();
+            auto prompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
             std::cout << "Decoder layer forward pass: " << prompt_duration.count() << std::endl;
 
             PUSH_RANGE("decoding init");
@@ -1217,6 +1209,10 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
     const size_t local_batch_size = getLocalBatchSize(batch_size, 1, pipeline_para_.world_size_);
     FT_CHECK(batch_size % local_batch_size == 0);
     const size_t iteration_num = batch_size / local_batch_size;
+
+    auto prompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prompt_stop);
+    std::cout << "Processing after forward pass: " << prompt_duration.count() << std::endl;
+
     for (int microbatch = 0; microbatch < iteration_num; ++microbatch) {
         microbatch_should_stop_[microbatch] = false;
     }
