@@ -1097,7 +1097,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
                  {"value_cache", Tensor(MEMORY_GPU, data_type, self_v_cache_shape, value_cache_)},
                  {"last_token_hidden_units",
                   Tensor(MEMORY_GPU, data_type, {batch_size * beam_width, hidden_units_}, decoder_output_buf_)}});
-
+           
             gpt_context_decoder_->forward(
                 &decoder_output_tensors, &decoder_input_tensors, &gpt_weights->decoder_layer_weights);
 
@@ -1208,7 +1208,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
                             stream_);
     POP_RANGE;
 
-    auto prompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prompt_stop);
+    autoprompt_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prompt_stop);
     std::cout << "Mask padding tokens: " << prompt_duration.count() << std::endl;
 
     // If continue, we restart from initial_step because last token hasn't been processed in decoder
@@ -1624,6 +1624,9 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
         }
         double averageDuration = static_cast<double>(totalDuration) / token_durations.size();
         std::cout << "Token Phase: " << averageDuration << " ms" << std::endl;
+
+        printf("key_cache", (char *) key_cache_);
+
     }
     PUSH_RANGE("communicate tensors");
     setOutputTensors(
