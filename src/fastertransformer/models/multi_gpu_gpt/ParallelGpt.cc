@@ -1100,7 +1100,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
            
             gpt_context_decoder_->forward(
                 &decoder_output_tensors, &decoder_input_tensors, &gpt_weights->decoder_layer_weights);
-            std::cout << "prompt decoder forward pass" << (char*)key_cache_ << std::endl;
+            // std::cout << "prompt decoder forward pass" << (char*)key_cache_ << std::endl;
             if (is_return_context_embeddings) {
                 PUSH_RANGE("context embedding sum length dim");
                 invokeSumLengthDimension(output_tensors->at("context_embeddings").getPtr<float>(),
@@ -1367,7 +1367,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
 
                 gpt_decoder_->forward(
                     &decoder_output_tensors, &decoder_input_tensors, &gpt_weights->decoder_layer_weights);
-                std::cout << "token decoder forward pass" << (char*)key_cache_ << std::endl;
+                // std::cout << "token decoder forward pass" << (char*)key_cache_ << std::endl;
 
             }
 
@@ -1629,7 +1629,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
     PUSH_RANGE("communicate tensors");
     setOutputTensors(
         output_tensors, input_tensors, gen_len, session_len, max_context_len, max_input_without_prompt_length);
-    sendTensorsToFirstPipelineNode(output_tensors, input_tensors);
+    sendTensorsToFirstPi pelineNode(output_tensors, input_tensors);
     POP_RANGE;
 }
 
