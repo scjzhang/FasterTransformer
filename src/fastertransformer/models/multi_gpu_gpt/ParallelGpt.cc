@@ -1100,7 +1100,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
            
             gpt_context_decoder_->forward(
                 &decoder_output_tensors, &decoder_input_tensors, &gpt_weights->decoder_layer_weights);
-
+            std::cout << "prompt decoder forward pass" << (char*)key_cache_ << std::endl;
             if (is_return_context_embeddings) {
                 PUSH_RANGE("context embedding sum length dim");
                 invokeSumLengthDimension(output_tensors->at("context_embeddings").getPtr<float>(),
@@ -1367,6 +1367,8 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
 
                 gpt_decoder_->forward(
                     &decoder_output_tensors, &decoder_input_tensors, &gpt_weights->decoder_layer_weights);
+                std::cout << "token decoder forward pass" << (char*)key_cache_ << std::endl;
+
             }
 
             if (!fill_caches_only && pipeline_para_.rank_ == pipeline_para_.world_size_ - 1) {
@@ -1621,7 +1623,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
         double averageDuration = static_cast<double>(totalDuration) / token_durations.size();
         std::cout << "Token Phase: " << averageDuration << " ms" << std::endl;
 
-        printf("key_cache", (char *) key_cache_);
+        std::cout << "Final wrap up:" << (char*)key_cache_ << std::endl;
 
     }
     PUSH_RANGE("communicate tensors");
