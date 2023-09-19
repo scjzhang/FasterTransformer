@@ -1631,6 +1631,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
 
     }
     const T* typedKeyCache = reinterpret_cast<const T*>(key_cache_);
+    std::cout << "Print out key cache" << std::endl;
     for (size_t i = 0; i < totalElements; ++i) {
         T element = typedKeyCache[i];
         std::cout << "Key cache:" << element << std::endl;
