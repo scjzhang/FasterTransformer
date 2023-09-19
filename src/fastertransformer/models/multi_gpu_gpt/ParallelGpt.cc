@@ -1630,9 +1630,9 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
         // std::cout << "Final wrap up:" << (char*)key_cache_ << std::endl;
 
     }
-    const DataType_* typedKeyCache = reinterpret_cast<const DataType_*>(key_cache_);
+    const T* typedKeyCache = reinterpret_cast<const T*>(key_cache_);
     for (size_t i = 0; i < totalElements; ++i) {
-        DataType_* element = typedKeyCache[i];
+        T element = typedKeyCache[i];
         std::cout << "Key cache:" << element << std::endl;
     }
     PUSH_RANGE("communicate tensors");
