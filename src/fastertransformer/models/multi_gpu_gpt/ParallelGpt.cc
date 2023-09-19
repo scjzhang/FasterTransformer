@@ -820,6 +820,12 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
                                                     size_per_head_ / (16 / sizeof(T)),
                                                     memory_len,
                                                     16 / sizeof(T)};
+
+    size_t totalElements = 1;
+    for (size_t dim : self_k_cache_shape) {
+        totalElements *= dim;
+    }
+
     const std::vector<size_t> self_v_cache_shape = {
         num_layer_ / pipeline_para_.world_size_, batch_size * beam_width, local_head_num_, memory_len, size_per_head_};
 
@@ -1621,9 +1627,13 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
         }
         double averageDuration = static_cast<double>(totalDuration) / token_durations.size();
         std::cout << "Token Phase: " << averageDuration << " ms" << std::endl;
-        std::cout << "size of t:" << sizeof(T) << std::endl;
         // std::cout << "Final wrap up:" << (char*)key_cache_ << std::endl;
 
+    }
+
+    for (size_t i = 0; i < totalElements; ++i) {
+        T element = key_cache_[i];
+        std::count << "Key cache:" << element << std::endl;
     }
     PUSH_RANGE("communicate tensors");
     setOutputTensors(
