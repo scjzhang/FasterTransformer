@@ -1633,7 +1633,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
 
     for (size_t i = 0; i < totalElements; ++i) {
         T element = key_cache_[i];
-        std::count << "Key cache:" << element << std::endl;
+        std::cout << "Key cache:" << element << std::endl;
     }
     PUSH_RANGE("communicate tensors");
     setOutputTensors(
