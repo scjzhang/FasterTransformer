@@ -1355,6 +1355,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
                                                          linear_bias_slopes_ + local_head_num_ * tensor_para_.rank_)});
                 }
 
+
                 std::unordered_map<std::string, Tensor> decoder_output_tensors(
                     {{"decoder_output",
                       Tensor(MEMORY_GPU,
@@ -1620,8 +1621,8 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
         }
         double averageDuration = static_cast<double>(totalDuration) / token_durations.size();
         std::cout << "Token Phase: " << averageDuration << " ms" << std::endl;
-
-        std::cout << "Final wrap up:" << (char*)key_cache_ << std::endl;
+        std::cout << "size of t:" << sizeof(T) << std::endl;
+        // std::cout << "Final wrap up:" << (char*)key_cache_ << std::endl;
 
     }
     PUSH_RANGE("communicate tensors");
