@@ -1636,7 +1636,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
     std::cout << "Typed key cache:" << typedKeyCache << std::endl;
 
     for (size_t i = 0; i < totalElements; ++i) {
-        T element = typedKeyCache[i];
+        T element = *typedKeyCache;//[i];
         std::cout << "Key cache:" << element << std::endl;
     }
     PUSH_RANGE("communicate tensors");
