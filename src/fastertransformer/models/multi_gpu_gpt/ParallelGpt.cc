@@ -1630,15 +1630,22 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
         // std::cout << "Final wrap up:" << (char*)key_cache_ << std::endl;
 
     }
-    const T* typedKeyCache = reinterpret_cast<const T*>(key_cache_);
-    std::cout << "Print out key cache" << std::endl;
-    std::cout << "Key cache:" << key_cache_ << std::endl;
-    std::cout << "Typed key cache:" << typedKeyCache << std::endl;
 
-    for (size_t i = 0; i < totalElements; ++i) {
-        T element = *typedKeyCache;//[i];
-        std::cout << "Key cache:" << element << std::endl;
-    }
+
+    // const T* typedKeyCache = reinterpret_cast<const T*>(key_cache_);
+    // std::cout << "Key cache addr:" << typedKeyCache << std::endl;
+
+    // std::cout << "Allocate CPU memory for key cache" << std::endl;
+    // T* cpu_key_cache;
+    // cudaMallocHost((void**)&cpu_key_cache, sizeof(T) * totalElements);
+
+    // std::cout << "Copy key cache to CPU" << std::endl;
+    // cudaMemcpy(cpu_key_cache, key_cache_, sizeof(T) * totalElements, cudaMemcpyDeviceToHost);
+
+    // for (size_t i = 0; i < totalElements; ++i) {
+    //     T element = *typedKeyCache;//[i];
+    //     std::cout << "Key cache:" << element << std::endl;
+    // }
     PUSH_RANGE("communicate tensors");
     setOutputTensors(
         output_tensors, input_tensors, gen_len, session_len, max_context_len, max_input_without_prompt_length);
