@@ -186,6 +186,12 @@ def get_args():
         '--batch_size', type=int, default=1,
         help='The batch size of the input prompt')
     group.add_argument(
+        '--tensor_para_size', atype=int, default=1,
+        help='Tensor parallelism size')
+    group.add_argument(
+        '--pipeline_para_size', atype=int, default=1,
+        help='Pipeline parallelism size')
+    group.add_argument(
         '--max_new_tokens', type=int, default=128,
         help='The max number of tokens to generate')
     group.add_argument(
