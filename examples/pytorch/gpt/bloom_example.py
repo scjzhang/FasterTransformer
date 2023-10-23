@@ -186,10 +186,10 @@ def get_args():
         '--batch_size', type=int, default=1,
         help='The batch size of the input prompt')
     group.add_argument(
-        '--tensor_para_size', atype=int, default=1,
+        '--tensor_para_size', type=int, default=1,
         help='Tensor parallelism size')
     group.add_argument(
-        '--pipeline_para_size', atype=int, default=1,
+        '--pipeline_para_size', type=int, default=1,
         help='Pipeline parallelism size')
     group.add_argument(
         '--max_new_tokens', type=int, default=128,
@@ -285,7 +285,7 @@ def get_model_and_tokenizer(args: argparse.Namespace):
 
     # Check sanity and consistency between the model and tokenizer.
     checklist = ['head_num', 'size_per_head', 'vocab_size', 'layer_num',
-                 'tensor_para_size', 'tensor_para_size', 'weights_data_type']
+                 'tensor_para_size', 'pipeline_para_size', 'weights_data_type']
     if None in [model_args[k] for k in checklist]:
         none_params = [p for p in checklist if model_args[p] is None]
         print(f'[FT][WARNING] Found None parameters {none_params}. They must '
