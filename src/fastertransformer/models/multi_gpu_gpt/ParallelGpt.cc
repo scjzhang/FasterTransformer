@@ -667,6 +667,11 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
     auto start = std::chrono::high_resolution_clock::now();
     std::vector<std::chrono::milliseconds> token_durations;
 
+    if (tensor_para_.rank_ == 0){
+        std::time_t start_timestamp = std::chrono::system_clock::to_time_t(start);
+ 
+        std::cout << pipeline_para_.rank_ <<" Started computation at " << std::ctime(&start_timestamp) << std::endl;
+    }
     // NOTE: the input already contains the p/prompt-tunning tokens ids for p/prompt tuning task
     // prompt_learning_task_name_ids are used by both p/prompt-tunning and prefix_prompt task
     const int* prompt_learning_task_name_ids =
@@ -968,6 +973,11 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
 
         // handle first step
         start = std::chrono::high_resolution_clock::now();
+        if (tensor_para_.rank_ == 0){
+        std::time_t start_timestamp = std::chrono::system_clock::to_time_t(start);
+ 
+        std::cout << pipeline_para_.rank_ <<" Started computation at " << std::ctime(&end_time) << std::endl;
+        }
         if (has_p_prompt_tuning_ || has_prefix_prompt_ || has_prefix_soft_prompt_ || max_input_length > 1) {
             PUSH_RANGE("input tiling and init");
             invokeTileGptPromptInputs(tiled_input_ids_buf_,
@@ -1198,7 +1208,11 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
         }
     }
     auto prompt_stop = std::chrono::high_resolution_clock::now();
+    if (tensor_para_.rank_ == 0){
+    std::time_t prompt_stop_timestamp = std::chrono::system_clock::to_time_t(prompt_stop);
 
+    std::cout << pipeline_para_.rank_ <<" stopped prompt computation at " << std::ctime(&prompt_stop_timestamp) << std::endl;
+    }
 
     PUSH_RANGE("mask padding tokens");
     invokeMaskPaddingTokens(tiled_masked_tokens_,
@@ -1246,27 +1260,6 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
             // these buffers are initialized by context directly.
             if (step_ != step_start) {
                 start = std::chrono::high_resolution_clock::now();
-                auto currentTime = std::chrono::steady_clock::now();
-
-                // Convert the time_point to a time_point with microsecond precision
-                auto currentTimeMicros = std::chrono::time_point_cast<std::chrono::microseconds>(currentTime);
-
-                // Extract the time since epoch in microseconds
-                auto timestamp = currentTimeMicros.time_since_epoch().count();
-
-                // Convert the timestamp to std::time_t for date and time components
-                std::time_t now = std::chrono::system_clock::to_time_t(currentTimeMicros);
-
-                // Extract date, time, seconds, and microseconds
-                auto tm = *std::localtime(&now);
-                auto microseconds = timestamp % 1000000;
-
-                if (tensor_para_.rank_ == 0) {
-                    // Format and print the timestamp
-                    char buffer[80];
-                    std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm);
-                    std::cout << pipeline_para_.rank_ << " timestamp: " << buffer << "." << microseconds << " microseconds" << std::endl;
-                }
             }
             if (step_ != step_start && pipeline_para_.rank_ != pipeline_para_.world_size_ - 1
                 && pipeline_para_.world_size_ > 1) {
@@ -1604,29 +1597,10 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
 
         auto stop = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-
-        auto currentTime = std::chrono::steady_clock::now();
-
-        // Convert the time_point to a time_point with microsecond precision
-        auto currentTimeMicros = std::chrono::time_point_cast<std::chrono::microseconds>(currentTime);
-
-        // Extract the time since epoch in microseconds
-        auto timestamp = currentTimeMicros.time_since_epoch().count();
-
-        // Convert the timestamp to std::time_t for date and time components
-        std::time_t now = std::chrono::system_clock::to_time_t(currentTimeMicros);
-
-        // Extract date, time, seconds, and microseconds
-        auto tm = *std::localtime(&now);
-        auto microseconds = timestamp % 1000000;
-
-        if (tensor_para_.rank_ == 0) {
-            // Format and print the timestamp
-            char buffer[80];
-            std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm);
-            std::cout << pipeline_para_.rank_ << " timestamp: " << buffer << "." << microseconds << " microseconds" << std::endl;
-        }
         if (step_ == step_start && tensor_para_.rank_ == 0) {
+            std::time_t stop_timestamp = std::chrono::system_clock::to_time_t(stop);
+
+            std::cout << pipeline_para_.rank_ <<" stopped computation at " << std::ctime(&stop_timestamp) << std::endl;
             std::cout << "Prompt Phase: " << duration.count() << " ms" << std::endl;
         }
         if (step_ != step_start) {
