@@ -667,6 +667,11 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
     auto start = std::chrono::high_resolution_clock::now();
     std::vector<std::chrono::milliseconds> token_durations;
 
+    if (tensor_para_.rank_ == 0){
+        std::time_t start_timestamp = std::chrono::system_clock::to_time_t(start);
+ 
+        std::cout << pipeline_para_.rank_ <<" Started computation at " << std::ctime(&start_timestamp) << std::endl;
+    }
     // NOTE: the input already contains the p/prompt-tunning tokens ids for p/prompt tuning task
     // prompt_learning_task_name_ids are used by both p/prompt-tunning and prefix_prompt task
     const int* prompt_learning_task_name_ids =
@@ -968,6 +973,11 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
 
         // handle first step
         start = std::chrono::high_resolution_clock::now();
+        if (tensor_para_.rank_ == 0){
+        std::time_t start_timestamp = std::chrono::system_clock::to_time_t(start);
+ 
+        std::cout << pipeline_para_.rank_ <<" Started computation at " << std::ctime(&end_time) << std::endl;
+        }
         if (has_p_prompt_tuning_ || has_prefix_prompt_ || has_prefix_soft_prompt_ || max_input_length > 1) {
             PUSH_RANGE("input tiling and init");
             invokeTileGptPromptInputs(tiled_input_ids_buf_,
@@ -1198,7 +1208,11 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
         }
     }
     auto prompt_stop = std::chrono::high_resolution_clock::now();
+    if (tensor_para_.rank_ == 0){
+    std::time_t prompt_stop_timestamp = std::chrono::system_clock::to_time_t(prompt_stop);
 
+    std::cout << pipeline_para_.rank_ <<" stopped prompt computation at " << std::ctime(&prompt_stop_timestamp) << std::endl;
+    }
 
     PUSH_RANGE("mask padding tokens");
     invokeMaskPaddingTokens(tiled_masked_tokens_,
@@ -1584,6 +1598,9 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
         auto stop = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
         if (step_ == step_start && tensor_para_.rank_ == 0) {
+            std::time_t stop_timestamp = std::chrono::system_clock::to_time_t(stop);
+
+            std::cout << pipeline_para_.rank_ <<" stopped computation at " << std::ctime(&stop_timestamp) << std::endl;
             std::cout << "Prompt Phase: " << duration.count() << " ms" << std::endl;
         }
         if (step_ != step_start) {
